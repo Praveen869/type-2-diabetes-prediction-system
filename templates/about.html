@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}About – DiabetesAI{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container text-center text-white py-5">
+    <span class="section-tag-light">About Us</span>
+    <h1 class="display-5 fw-800 mt-2">About <span class="text-gradient-warm">DiabetesAI</span></h1>
+    <p class="lead mt-3 opacity-85">Understanding the technology behind your health assessment</p>
+  </div>
+</section>
+
+<section class="section-pad">
+  <div class="container">
+    <!-- Model Info -->
+    <div class="row align-items-center g-5 mb-5">
+      <div class="col-lg-6">
+        <span class="section-tag">The Model</span>
+        <h2 class="section-title mt-2">Machine Learning <span class="text-gradient">at its Core</span></h2>
+        <p class="text-muted">Our prediction engine is trained on the famous <strong>Pima Indians Diabetes Dataset</strong>, originally from the National Institute of Diabetes and Digestive and Kidney Diseases.</p>
+        <p class="text-muted">The dataset contains diagnostic measurements from 768 female patients of Pima Indian heritage, aged 21 and over. The model learns patterns from 8 key clinical features to classify diabetes risk.</p>
+        <div class="model-badge-row mt-4">
+          <span class="model-badge"><i class="bi bi-check-circle-fill me-1"></i>Scikit-learn</span>
+          <span class="model-badge"><i class="bi bi-check-circle-fill me-1"></i>NumPy</span>
+          <span class="model-badge"><i class="bi bi-check-circle-fill me-1"></i>Pandas</span>
+          <span class="model-badge"><i class="bi bi-check-circle-fill me-1"></i>Joblib</span>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <div class="about-stat-card">
+              <div class="about-stat-num text-primary">768</div>
+              <div class="about-stat-label">Training Samples</div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="about-stat-card">
+              <div class="about-stat-num text-success">8</div>
+              <div class="about-stat-label">Input Features</div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="about-stat-card">
+              <div class="about-stat-num text-warning">2</div>
+              <div class="about-stat-label">Output Classes</div>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="about-stat-card">
+              <div class="about-stat-num text-danger">90%+</div>
+              <div class="about-stat-label">Accuracy Score</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features Table -->
+    <div class="about-section-box mb-5">
+      <h4 class="mb-4"><i class="bi bi-list-check me-2"></i>Input Feature Descriptions</h4>
+      <div class="table-responsive">
+        <table class="table table-custom">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Description</th>
+              <th>Valid Range</th>
+              <th>Unit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Pregnancies</strong></td><td>Number of times pregnant</td><td>0 – 20</td><td>Count</td></tr>
+            <tr><td><strong>Glucose</strong></td><td>Plasma glucose concentration (2-hour OGTT)</td><td>50 – 250</td><td>mg/dL</td></tr>
+            <tr><td><strong>Blood Pressure</strong></td><td>Diastolic blood pressure</td><td>40 – 150</td><td>mm Hg</td></tr>
+            <tr><td><strong>Skin Thickness</strong></td><td>Triceps skin fold thickness</td><td>0 – 100</td><td>mm</td></tr>
+            <tr><td><strong>Insulin</strong></td><td>2-hour serum insulin level</td><td>0 – 900</td><td>μU/mL</td></tr>
+            <tr><td><strong>BMI</strong></td><td>Body Mass Index</td><td>10 – 70</td><td>kg/m²</td></tr>
+            <tr><td><strong>Diabetes Pedigree Function</strong></td><td>Genetic risk score based on family history</td><td>0.0 – 3.0</td><td>Score</td></tr>
+            <tr><td><strong>Age</strong></td><td>Age of the patient</td><td>30 – 50</td><td>Years</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="section-header text-center mb-5">
+      <h2 class="section-title">How It <span class="text-gradient">Works</span></h2>
+    </div>
+    <div class="row g-4 mb-5">
+      {% for step in [
+        ('1', 'Register & Login', 'Create your free account and log in securely. Your data is hashed and protected.', 'bi-person-plus-fill', 'gradient-blue'),
+        ('2', 'Enter Parameters', 'Fill in 8 clinical measurements from your lab reports or medical history.', 'bi-clipboard2-pulse-fill', 'gradient-purple'),
+        ('3', 'AI Analysis', 'Our ML model processes your inputs through a trained classifier in milliseconds.', 'bi-cpu-fill', 'gradient-green'),
+        ('4', 'Get Results', 'Receive a clear risk assessment — High or Low — with optional probability score.', 'bi-bar-chart-fill', 'gradient-orange')
+      ] %}
+      <div class="col-md-6 col-lg-3">
+        <div class="how-card">
+          <div class="how-step">{{ step[0] }}</div>
+          <div class="feature-icon {{ step[4] }} mt-3"><i class="bi {{ step[2] }}"></i></div>
+          <h5 class="mt-3 fw-700">{{ step[1] }}</h5>
+          <p class="text-muted small mb-0">{{ step[3] }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer-box">
+      <div class="disclaimer-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+      <div>
+        <h5 class="fw-700 mb-1">Medical Disclaimer</h5>
+        <p class="mb-0 text-muted">DiabetesAI is an <strong>educational tool</strong> built for learning purposes. The predictions made by this system are based on statistical patterns and are <strong>not a medical diagnosis</strong>. Always consult a qualified healthcare professional for proper medical evaluation and advice.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

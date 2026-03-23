@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – DiabetesAI{% endblock %}
+
+{% block content %}
+<section class="section-pad">
+  <div class="container">
+    <div class="section-header mb-5">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+          <span class="section-tag">My Dashboard</span>
+          <h1 class="section-title mb-0">Prediction <span class="text-gradient">History</span></h1>
+        </div>
+        <a href="{{ url_for('predict') }}" class="btn btn-predict-sm">
+          <i class="bi bi-plus-lg me-2"></i>New Prediction
+        </a>
+      </div>
+    </div>
+
+    {% if not history %}
+    <div class="empty-state">
+      <div class="empty-icon"><i class="bi bi-clipboard2-x"></i></div>
+      <h4 class="empty-title">No Predictions Yet</h4>
+      <p class="empty-subtitle">You haven't made any predictions yet. Run your first assessment to see results here.</p>
+      <a href="{{ url_for('predict') }}" class="btn btn-predict-sm mt-2">
+        <i class="bi bi-cpu-fill me-2"></i>Make My First Prediction
+      </a>
+    </div>
+    {% else %}
+    <!-- Summary Cards -->
+    {% set total = history|length %}
+    {% set high_risk = history|selectattr('prediction_result', 'equalto', 1)|list|length %}
+    {% set low_risk = total - high_risk %}
+    <div class="row g-4 mb-5">
+      <div class="col-sm-6 col-lg-3">
+        <div class="dash-stat-card">
+          <div class="dash-stat-icon bg-primary"><i class="bi bi-bar-chart-fill"></i></div>
+          <div class="dash-stat-num">{{ total }}</div>
+          <div class="dash-stat-label">Total Predictions</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="dash-stat-card">
+          <div class="dash-stat-icon bg-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+          <div class="dash-stat-num">{{ high_risk }}</div>
+          <div class="dash-stat-label">High Risk Results</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="dash-stat-card">
+          <div class="dash-stat-icon bg-success"><i class="bi bi-shield-check"></i></div>
+          <div class="dash-stat-num">{{ low_risk }}</div>
+          <div class="dash-stat-label">Low Risk Results</div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <div class="dash-stat-card">
+          <div class="dash-stat-icon bg-info"><i class="bi bi-person-circle"></i></div>
+          <div class="dash-stat-num">{{ session.get('user_name', '').split(' ')[0] }}</div>
+          <div class="dash-stat-label">Welcome back!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-card-header">
+        <i class="bi bi-table me-2"></i>All Predictions
+        <span class="badge bg-primary ms-2">{{ total }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-custom mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Glucose</th>
+              <th>BMI</th>
+              <th>Age</th>
+              <th>Insulin</th>
+              <th>Blood Pressure</th>
+              <th>Probability</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in history %}
+            <tr>
+              <td class="text-muted small">{{ loop.index }}</td>
+              <td class="small">{{ h.get('timestamp', 'N/A') }}</td>
+              <td>{{ h.get('glucose', '—') }}</td>
+              <td>{{ h.get('bmi', '—') }}</td>
+              <td>{{ h.get('age', '—') | int }}</td>
+              <td>{{ h.get('insulin', '—') }}</td>
+              <td>{{ h.get('blood_pressure', '—') }}</td>
+              <td>
+                {% if h.get('prediction_probability') is not none %}
+                  <div class="mini-bar">
+                    <div class="mini-fill {% if h.prediction_result == 1 %}bg-danger{% else %}bg-success{% endif %}"
+                         style="width: {{ h.prediction_probability }}%"></div>
+                  </div>
+                  <small>{{ h.prediction_probability }}%</small>
+                {% else %}—{% endif %}
+              </td>
+              <td>
+                {% if h.get('prediction_result') == 1 %}
+                  <span class="result-badge result-badge-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>High Risk
+                  </span>
+                {% else %}
+                  <span class="result-badge result-badge-success">
+                    <i class="bi bi-shield-check me-1"></i>Low Risk
+                  </span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

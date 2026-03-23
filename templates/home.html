@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}DiabetesAI – Intelligent Risk Assessment{% endblock %}
+
+{% block content %}
+
+<!-- ── Hero Section ─────────────────────────────────────────── -->
+<section class="hero-section">
+  <div class="hero-bg-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+  <div class="container position-relative">
+    <div class="row align-items-center min-vh-85 py-5">
+      <div class="col-lg-6 text-white">
+        <div class="hero-badge mb-3 animate-fadeInUp">
+          <i class="bi bi-stars me-2"></i>AI-Powered Diabetes Screening
+        </div>
+        <h1 class="display-4 fw-800 lh-sm mb-4 animate-fadeInUp delay-1">
+          Predict Your<br /><span class="text-gradient-warm">Diabetes Risk</span><br />with Precision
+        </h1>
+        <p class="hero-subtitle mb-5 animate-fadeInUp delay-2">
+          Harness the power of machine learning trained on the Pima Indians Diabetes dataset.
+          Get an instant, data-driven assessment of your diabetes risk in seconds.
+        </p>
+        <div class="d-flex flex-wrap gap-3 animate-fadeInUp delay-3">
+          {% if session.get('user_email') %}
+            <a href="{{ url_for('predict') }}" class="btn btn-hero-primary btn-lg px-5">
+              <i class="bi bi-cpu-fill me-2"></i>Run Prediction
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-hero-outline btn-lg px-5">
+              <i class="bi bi-grid-fill me-2"></i>Dashboard
+            </a>
+          {% else %}
+            <a href="{{ url_for('register') }}" class="btn btn-hero-primary btn-lg px-5">
+              <i class="bi bi-rocket-fill me-2"></i>Get Started Free
+            </a>
+            <a href="{{ url_for('about') }}" class="btn btn-hero-outline btn-lg px-5">
+              <i class="bi bi-play-circle-fill me-2"></i>Learn More
+            </a>
+          {% endif %}
+        </div>
+        <div class="hero-stats mt-5 animate-fadeInUp delay-4">
+          <div class="stat-item"><span class="stat-num">90%+</span><span class="stat-label">Accuracy</span></div>
+          <div class="stat-divider"></div>
+          <div class="stat-item"><span class="stat-num">8</span><span class="stat-label">Features</span></div>
+          <div class="stat-divider"></div>
+          <div class="stat-item"><span class="stat-num">768</span><span class="stat-label">Training Samples</span></div>
+        </div>
+      </div>
+      <div class="col-lg-6 d-none d-lg-flex justify-content-center align-items-center">
+        <div class="hero-visual animate-float">
+          <div class="visual-card main-card">
+            <div class="visual-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+            <div class="visual-title">Risk Assessment</div>
+            <div class="visual-subtitle">AI Analysis Complete</div>
+            <div class="risk-bar-wrap mt-3">
+              <div class="d-flex justify-content-between mb-1">
+                <small class="text-muted">Risk Level</small><small class="text-success fw-600">Low</small>
+              </div>
+              <div class="progress" style="height:8px">
+                <div class="progress-bar bg-success animate-bar" role="progressbar" style="width:28%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="visual-card side-card-1">
+            <i class="bi bi-shield-check text-success fs-3"></i>
+            <div class="mt-1 fw-600 small">Protected</div>
+          </div>
+          <div class="visual-card side-card-2">
+            <i class="bi bi-graph-up-arrow text-info fs-3"></i>
+            <div class="mt-1 fw-600 small">Analytics</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Stats Bar ─────────────────────────────────────────────── -->
+<section class="stats-bar">
+  <div class="container">
+    <div class="row text-center gy-3">
+      <div class="col-6 col-md-3">
+        <i class="bi bi-people-fill text-primary fs-2"></i>
+        <div class="stats-bar-num">537M+</div>
+        <div class="stats-bar-label">People with Diabetes</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <i class="bi bi-geo-alt-fill text-danger fs-2"></i>
+        <div class="stats-bar-num">3 in 4</div>
+        <div class="stats-bar-label">Live in Low-Income Areas</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <i class="bi bi-clock-history text-warning fs-2"></i>
+        <div class="stats-bar-num">5 sec</div>
+        <div class="stats-bar-label">Prediction Time</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <i class="bi bi-check2-circle text-success fs-2"></i>
+        <div class="stats-bar-num">Free</div>
+        <div class="stats-bar-label">Always Free to Use</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Feature Cards ─────────────────────────────────────────── -->
+<section class="section-pad">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <span class="section-tag">Why DiabetesAI?</span>
+      <h2 class="section-title">Everything you need for<br /><span class="text-gradient">smart health insights</span></h2>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card h-100">
+          <div class="feature-icon gradient-blue"><i class="bi bi-cpu-fill"></i></div>
+          <h5 class="feature-title">ML-Powered Accuracy</h5>
+          <p class="feature-desc">Trained on the Pima Indians Diabetes Dataset using advanced ensemble machine learning techniques for reliable predictions.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card h-100">
+          <div class="feature-icon gradient-purple"><i class="bi bi-shield-lock-fill"></i></div>
+          <h5 class="feature-title">Secure & Private</h5>
+          <p class="feature-desc">Your data is encrypted and stored securely. Passwords are hashed using industry-standard algorithms. Your privacy is our priority.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card h-100">
+          <div class="feature-icon gradient-green"><i class="bi bi-clock-fill"></i></div>
+          <h5 class="feature-title">Instant Results</h5>
+          <p class="feature-desc">Get your diabetes risk assessment in under 5 seconds. No waiting, no appointments — immediate, actionable insights.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card h-100">
+          <div class="feature-icon gradient-orange"><i class="bi bi-bar-chart-fill"></i></div>
+          <h5 class="feature-title">Prediction History</h5>
+          <p class="feature-desc">Track your health trends over time. Every prediction is saved to your personal dashboard for ongoing monitoring.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card h-100">
+          <div class="feature-icon gradient-pink"><i class="bi bi-phone-fill"></i></div>
+          <h5 class="feature-title">Fully Responsive</h5>
+          <p class="feature-desc">Access DiabetesAI from any device — desktop, tablet, or smartphone. Optimized for every screen size.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-4">
+        <div class="feature-card h-100">
+          <div class="feature-icon gradient-teal"><i class="bi bi-person-check-fill"></i></div>
+          <h5 class="feature-title">Easy to Use</h5>
+          <p class="feature-desc">Simply enter 8 medical parameters. Our intuitive interface guides you through each step with clear validation and feedback.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Awareness Section ──────────────────────────────────────── -->
+<section class="section-pad bg-subtle">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5">
+        <span class="section-tag">Awareness</span>
+        <h2 class="section-title mt-2">Understanding <span class="text-gradient">Diabetes</span></h2>
+        <p class="text-muted mb-4">Diabetes affects over 537 million adults worldwide. Early detection is the key to better outcomes and a healthier life.</p>
+        <div class="awareness-list">
+          <div class="awareness-item">
+            <div class="awareness-icon"><i class="bi bi-1-circle-fill"></i></div>
+            <div>
+              <strong>Type 1 Diabetes</strong>
+              <p class="small text-muted mb-0">An autoimmune condition where the body stops producing insulin. Usually diagnosed early in life.</p>
+            </div>
+          </div>
+          <div class="awareness-item">
+            <div class="awareness-icon"><i class="bi bi-2-circle-fill"></i></div>
+            <div>
+              <strong>Type 2 Diabetes</strong>
+              <p class="small text-muted mb-0">The most common form. The body doesn't use insulin properly. Strongly linked to lifestyle and genetics.</p>
+            </div>
+          </div>
+          <div class="awareness-item">
+            <div class="awareness-icon"><i class="bi bi-3-circle-fill"></i></div>
+            <div>
+              <strong>Gestational Diabetes</strong>
+              <p class="small text-muted mb-0">Develops during pregnancy and usually resolves after birth, but increases future type 2 risk.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <div class="info-card info-card-red">
+              <i class="bi bi-droplet-fill fs-2 mb-2"></i>
+              <h6>High Blood Glucose</h6>
+              <p class="small mb-0">Excess sugar in the blood damages vessels and nerves over time.</p>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="info-card info-card-blue">
+              <i class="bi bi-activity fs-2 mb-2"></i>
+              <h6>Risk Factors</h6>
+              <p class="small mb-0">Obesity, inactivity, family history, and age are key risk factors.</p>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="info-card info-card-green">
+              <i class="bi bi-heart-fill fs-2 mb-2"></i>
+              <h6>Prevention</h6>
+              <p class="small mb-0">Healthy diet, exercise, and regular screenings dramatically reduce risk.</p>
+            </div>
+          </div>
+          <div class="col-sm-6">
+            <div class="info-card info-card-purple">
+              <i class="bi bi-hospital-fill fs-2 mb-2"></i>
+              <h6>Management</h6>
+              <p class="small mb-0">With proper care, people with diabetes can live full, healthy lives.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA Section ───────────────────────────────────────────── -->
+<section class="cta-section">
+  <div class="container text-center">
+    <h2 class="cta-title mb-3">Ready to check your risk?</h2>
+    <p class="cta-subtitle mb-5">Join thousands of users who have taken control of their health with DiabetesAI.</p>
+    {% if session.get('user_email') %}
+      <a href="{{ url_for('predict') }}" class="btn btn-cta btn-lg px-5">
+        <i class="bi bi-cpu-fill me-2"></i>Run Prediction Now
+      </a>
+    {% else %}
+      <a href="{{ url_for('register') }}" class="btn btn-cta btn-lg px-5">
+        <i class="bi bi-rocket-fill me-2"></i>Create Free Account
+      </a>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

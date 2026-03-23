@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Contact – DiabetesAI{% endblock %}
+
+{% block content %}
+<section class="page-hero">
+  <div class="container text-center text-white py-5">
+    <span class="section-tag-light">Get In Touch</span>
+    <h1 class="display-5 fw-800 mt-2">Contact <span class="text-gradient-warm">Us</span></h1>
+    <p class="lead mt-3 opacity-85">Have questions? We'd love to hear from you.</p>
+  </div>
+</section>
+
+<section class="section-pad">
+  <div class="container">
+    <div class="row g-5 justify-content-center">
+      <!-- Contact Info -->
+      <div class="col-lg-4">
+        <div class="contact-info-card">
+          <h5 class="fw-700 mb-4">Reach Us</h5>
+          <div class="contact-item">
+            <div class="contact-icon"><i class="bi bi-envelope-fill"></i></div>
+            <div>
+              <div class="contact-label">Email</div>
+              <div class="contact-value">praveenkrdwivedi.3249@gmail.com</div>
+            </div>
+          </div>
+          <div class="contact-item mt-3">
+            <div class="contact-icon"><i class="bi bi-geo-alt-fill"></i></div>
+            <div>
+              <div class="contact-label">Location</div>
+              <div class="contact-value">Built for learning & health awareness globally.</div>
+            </div>
+          </div>
+          <div class="contact-item mt-3">
+            <div class="contact-icon"><i class="bi bi-clock-fill"></i></div>
+            <div>
+              <div class="contact-label">Response Time</div>
+              <div class="contact-value">Within 24–48 hours</div>
+            </div>
+          </div>
+          <hr class="my-4" />
+          <h6 class="fw-600 mb-3">Follow Us</h6>
+          <div class="social-links">
+            <a href="#" class="social-link"><i class="bi bi-github"></i></a>
+            <a href="#" class="social-link"><i class="bi bi-linkedin"></i></a>
+            <a href="#" class="social-link"><i class="bi bi-twitter-x"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Form -->
+      <div class="col-lg-6">
+        <div class="contact-form-card">
+          <h4 class="fw-700 mb-4">Send Us a Message</h4>
+          <form method="POST" action="{{ url_for('contact') }}" id="contactForm" novalidate>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label-custom" for="c_name">Full Name</label>
+                <div class="input-group-custom">
+                  <span class="input-icon"><i class="bi bi-person-fill"></i></span>
+                  <input type="text" class="form-control-custom" id="c_name" name="c_name"
+                         placeholder="Your name" required />
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label-custom" for="c_email">Email Address</label>
+                <div class="input-group-custom">
+                  <span class="input-icon"><i class="bi bi-envelope-fill"></i></span>
+                  <input type="email" class="form-control-custom" id="c_email" name="c_email"
+                         placeholder="your@email.com" required />
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label-custom" for="c_subject">Subject</label>
+                <div class="input-group-custom">
+                  <span class="input-icon"><i class="bi bi-chat-fill"></i></span>
+                  <input type="text" class="form-control-custom" id="c_subject" name="c_subject"
+                         placeholder="How can we help?" required />
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label-custom" for="c_message">Message</label>
+                <textarea class="form-control-custom textarea-custom" id="c_message" name="c_message"
+                          rows="5" placeholder="Write your message here..." required></textarea>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-auth w-100">
+                  <i class="bi bi-send-fill me-2"></i>Send Message
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

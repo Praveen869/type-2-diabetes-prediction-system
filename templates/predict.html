@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Predict – DiabetesAI{% endblock %}
+
+{% block content %}
+<section class="section-pad">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <span class="section-tag">AI Prediction</span>
+      <h1 class="section-title">Diabetes Risk <span class="text-gradient">Assessment</span></h1>
+      <p class="text-muted">Fill in your medical parameters below and our AI model will assess your diabetes risk instantly.</p>
+    </div>
+
+    <div class="row g-5 justify-content-center">
+      <!-- ── Form Column ── -->
+      <div class="col-lg-7">
+        <div class="predict-card">
+          <div class="predict-card-header">
+            <i class="bi bi-clipboard2-pulse-fill me-2"></i>Enter Your Medical Parameters
+          </div>
+          <div class="predict-card-body">
+            <form method="POST" action="{{ url_for('predict') }}" id="predictForm" novalidate>
+
+              <div class="row g-3">
+                <!-- Pregnancies -->
+                <div class="col-sm-6">
+                  <label class="form-label-custom" for="pregnancies">
+                    <i class="bi bi-person-heart me-1 text-pink"></i>Pregnancies
+                  </label>
+                  <input type="number" class="form-control-custom" id="pregnancies" name="pregnancies"
+                         min="0" max="20" step="1" placeholder="0 – 20" required
+                         value="{{ request.form.get('pregnancies', '') }}" />
+                  <div class="field-hint">Number of times pregnant</div>
+                  <div class="invalid-feedback-custom">Enter a value between 0 and 20.</div>
+                </div>
+
+                <!-- Glucose -->
+                <div class="col-sm-6">
+                  <label class="form-label-custom" for="glucose">
+                    <i class="bi bi-droplet-fill me-1 text-warning"></i>Glucose (mg/dL)
+                  </label>
+                  <input type="number" class="form-control-custom" id="glucose" name="glucose"
+                         min="50" max="250" step="1" placeholder="50 – 250" required
+                         value="{{ request.form.get('glucose', '') }}" />
+                  <div class="field-hint">Plasma glucose concentration</div>
+                  <div class="invalid-feedback-custom">Enter a value between 50 and 250.</div>
+                </div>
+
+                <!-- Blood Pressure -->
+                <div class="col-sm-6">
+                  <label class="form-label-custom" for="blood_pressure">
+                    <i class="bi bi-heart-pulse-fill me-1 text-danger"></i>Blood Pressure (mm Hg)
+                  </label>
+                  <input type="number" class="form-control-custom" id="blood_pressure" name="blood_pressure"
+                         min="40" max="150" step="1" placeholder="40 – 150" required
+                         value="{{ request.form.get('blood_pressure', '') }}" />
+                  <div class="field-hint">Diastolic blood pressure</div>
+                  <div class="invalid-feedback-custom">Enter a value between 40 and 150.</div>
+                </div>
+
+                <!-- Skin Thickness -->
+                <div class="col-sm-6">
+                  <label class="form-label-custom" for="skin_thickness">
+                    <i class="bi bi-layers-fill me-1 text-info"></i>Skin Thickness (mm)
+                  </label>
+                  <input type="number" class="form-control-custom" id="skin_thickness" name="skin_thickness"
+                         min="0" max="100" step="1" placeholder="0 – 100" required
+                         value="{{ request.form.get('skin_thickness', '') }}" />
+                  <div class="field-hint">Triceps skin fold thickness</div>
+                  <div class="invalid-feedback-custom">Enter a value between 0 and 100.</div>
+                </div>
+
+                <!-- Insulin -->
+                <div class="col-sm-6">
+                  <label class="form-label-custom" for="insulin">
+                    <i class="bi bi-capsule-pill me-1 text-purple"></i>Insulin (μU/mL)
+                  </label>
+                  <input type="number" class="form-control-custom" id="insulin" name="insulin"
+                         min="0" max="900" step="1" placeholder="0 – 900" required
+                         value="{{ request.form.get('insulin', '') }}" />
+                  <div class="field-hint">2-hour serum insulin</div>
+                  <div class="invalid-feedback-custom">Enter a value between 0 and 900.</div>
+                </div>
+
+                <!-- BMI -->
+                <div class="col-sm-6">
+                  <label class="form-label-custom" for="bmi">
+                    <i class="bi bi-person-fill me-1 text-success"></i>BMI (kg/m²)
+                  </label>
+                  <input type="number" class="form-control-custom" id="bmi" name="bmi"
+                         min="10" max="70" step="0.1" placeholder="10.0 – 70.0" required
+                         value="{{ request.form.get('bmi', '') }}" />
+                  <div class="field-hint">Body mass index</div>
+                  <div class="invalid-feedback-custom">Enter a value between 10.0 and 70.0.</div>
+                </div>
+
+                <!-- DPF -->
+                <div class="col-sm-6">
+                  <label class="form-label-custom" for="dpf">
+                    <i class="bi bi-diagram-3-fill me-1 text-orange"></i>Diabetes Pedigree Function
+                  </label>
+                  <input type="number" class="form-control-custom" id="dpf" name="dpf"
+                         min="0.0" max="3.0" step="0.001" placeholder="0.000 – 3.000" required
+                         value="{{ request.form.get('dpf', '') }}" />
+                  <div class="field-hint">Genetic influence score</div>
+                  <div class="invalid-feedback-custom">Enter a value between 0.0 and 3.0.</div>
+                </div>
+
+                <!-- Age -->
+                <div class="col-sm-6">
+                  <label class="form-label-custom" for="age">
+                    <i class="bi bi-calendar3 me-1 text-teal"></i>Age (years)
+                  </label>
+                  <input type="number" class="form-control-custom" id="age" name="age"
+                         min="30" max="50" step="1" placeholder="30 – 50" required
+                         value="{{ request.form.get('age', '') }}" />
+                  <div class="field-hint">Age in years</div>
+                  <div class="invalid-feedback-custom">Enter a value between 30 and 50.</div>
+                </div>
+              </div>
+
+              <div class="mt-4 d-grid">
+                <button type="submit" class="btn btn-predict" id="predictBtn">
+                  <span class="btn-content">
+                    <i class="bi bi-cpu-fill me-2"></i>
+                    <span class="btn-text">Analyze My Risk</span>
+                    <span class="btn-loader d-none"><i class="bi bi-arrow-repeat spin me-2"></i>Analyzing...</span>
+                  </span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Sidebar ── -->
+      <div class="col-lg-4">
+        {% if result %}
+        <!-- ── Result Card ── -->
+        <div class="result-card result-{{ result.risk_class }} animate-fadeInUp" id="resultCard">
+          <div class="result-icon-wrap">
+            <i class="bi {{ result.icon }} result-icon"></i>
+          </div>
+          <h3 class="result-title">{{ result.label }}</h3>
+          {% if result.probability is not none %}
+          <div class="result-prob">
+            <div class="prob-label">Diabetes Probability</div>
+            <div class="prob-value">{{ result.probability }}%</div>
+            <div class="progress prob-bar mt-2">
+              <div class="progress-bar bg-{{ result.risk_class }}"
+                   role="progressbar"
+                   style="width: {{ result.probability }}%"
+                   aria-valuenow="{{ result.probability }}"
+                   aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+          </div>
+          {% endif %}
+          <hr class="result-divider" />
+          <div class="result-inputs">
+            {% for k, v in result.inputs.items() %}
+            <div class="result-input-row">
+              <span class="ri-label">{{ k }}</span>
+              <span class="ri-value">{{ v }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="result-disclaimer mt-3">
+            <i class="bi bi-info-circle me-1"></i>
+            This is not medical advice. Consult a doctor for a professional diagnosis.
+          </div>
+        </div>
+        {% else %}
+        <!-- ── Info Sidebar ── -->
+        <div class="predict-sidebar">
+          <div class="sidebar-section">
+            <h6 class="sidebar-title"><i class="bi bi-lightbulb-fill me-2 text-warning"></i>Tips</h6>
+            <ul class="sidebar-list">
+              <li>Use recent lab results for best accuracy</li>
+              <li>Glucose value should be from a fasting test</li>
+              <li>BMI = weight(kg) / height(m)²</li>
+              <li>Consult a doctor after getting results</li>
+            </ul>
+          </div>
+          <div class="sidebar-section mt-4">
+            <h6 class="sidebar-title"><i class="bi bi-shield-check me-2 text-success"></i>Privacy</h6>
+            <p class="small text-muted mb-0">Your data is stored securely and linked only to your account. We never share your medical information.</p>
+          </div>
+          <div class="sidebar-section mt-4">
+            <h6 class="sidebar-title"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>Model Info</h6>
+            <p class="small text-muted mb-0">Trained on the Pima Indians Diabetes Dataset with 8 clinical features. View the <a href="{{ url_for('about') }}">About page</a> for details.</p>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
