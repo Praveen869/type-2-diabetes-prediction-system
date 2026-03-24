@@ -93,7 +93,7 @@ def register():
                 'name': name,
                 'email': email,
                 'password': generate_password_hash(password),
-                'created_at': datetime.utcnow()
+                'created_at': datetime.now()
             })
         else:
             # Fallback: store in session for demo purposes
@@ -230,7 +230,7 @@ def predict():
                     'prediction_result': int(prediction),
                     'prediction_label': result['label'],
                     'prediction_probability': probability,
-                    'timestamp': datetime.utcnow()
+                    'timestamp': datetime.now()
                 })
 
         except (ValueError, KeyError) as e:

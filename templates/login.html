@@ -17,13 +17,13 @@
             <p class="auth-subtitle">Sign in to your DiabetesAI account</p>
           </div>
           <div class="auth-body">
-            <form method="POST" action="{{ url_for('login') }}" id="loginForm" novalidate>
+            <form method="POST" action="{{ url_for('login') }}" id="loginForm" autocomplete="off" novalidate>
               <div class="mb-3">
                 <label class="form-label-custom" for="email">Email Address</label>
                 <div class="input-group-custom">
                   <span class="input-icon"><i class="bi bi-envelope-fill"></i></span>
                   <input type="email" class="form-control-custom" id="email" name="email"
-                         placeholder="john@example.com" required autocomplete="email" />
+                         placeholder="john@example.com" required autocomplete="off" />
                 </div>
                 <div class="invalid-feedback-custom">Please enter a valid email address.</div>
               </div>
@@ -32,7 +32,7 @@
                 <div class="input-group-custom">
                   <span class="input-icon"><i class="bi bi-lock-fill"></i></span>
                   <input type="password" class="form-control-custom" id="password" name="password"
-                         placeholder="Your password" required autocomplete="current-password" />
+                         placeholder="Your password" required autocomplete="off" />
                   <button type="button" class="toggle-pw" onclick="togglePw('password')">
                     <i class="bi bi-eye" id="password-eye"></i>
                   </button>
