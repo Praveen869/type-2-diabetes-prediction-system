@@ -285,7 +285,7 @@ def contact():
         # Retrieve email credentials from the .env file
         sender_email = os.environ.get('EMAIL_USER')
         sender_password = os.environ.get('EMAIL_PASS', '') 
-        receiver_email = 'namekr567@gmail.com'
+        receiver_email = os.environ.get('RECEIVER_EMAIL', 'fallback@email.com')
 
         if not sender_password:
             flash('Email configuration (App Password) is missing on the server. Message not sent.', 'danger')
