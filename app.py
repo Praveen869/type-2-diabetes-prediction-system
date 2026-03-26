@@ -5,13 +5,22 @@ import joblib
 import numpy as np
 from datetime import datetime
 import os
+import smtplib
+from email.message import EmailMessage
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 app = Flask(__name__)
-app.secret_key = 'diabetes_ai_secret_key_2024_secure'
+app.secret_key = os.environ.get('SECRET_KEY', 'default_dev_key_if_not_set')
 
 # ─── MongoDB Setup ────────────────────────────────────────────────────────────
 try:
-    client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=5000)
+    mongo_uri = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/')
+    client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
     client.server_info()  # Test connection
     db = client['diabetes_ai_db']
     users_col = db['users']
@@ -264,11 +273,46 @@ def about():
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
     if request.method == 'POST':
-        flash('Thank you for your message! We will get back to you soon.', 'success')
+        c_name = request.form.get('c_name', '')
+        c_email = request.form.get('c_email', '')
+        c_subject = request.form.get('c_subject', '')
+        c_message = request.form.get('c_message', '')
+
+        if not all([c_name, c_email, c_subject, c_message]):
+            flash('All contact fields are required.', 'danger')
+            return redirect(url_for('contact'))
+
+        # Retrieve email credentials from the .env file
+        sender_email = os.environ.get('EMAIL_USER')
+        sender_password = os.environ.get('EMAIL_PASS', '') 
+        receiver_email = 'namekr567@gmail.com'
+
+        if not sender_password:
+            flash('Email configuration (App Password) is missing on the server. Message not sent.', 'danger')
+            return redirect(url_for('contact'))
+
+        msg = EmailMessage()
+        msg['Subject'] = f"DiabetesAI Contact: {c_subject}"
+        msg['From'] = sender_email
+        msg['To'] = receiver_email
+        msg.add_header('reply-to', c_email)
+        
+        body = f"New message from DiabetesAI Contact Form:\n\nName: {c_name}\nEmail: {c_email}\nSubject: {c_subject}\n\nMessage:\n{c_message}\n"
+        msg.set_content(body)
+
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+            flash('Thank you for your message! We have received it and will get back to you soon.', 'success')
+        except Exception as e:
+            print(f"Error sending email: {e}")
+            flash('An error occurred while sending the message. Please try again later.', 'danger')
+
         return redirect(url_for('contact'))
     return render_template('contact.html', user=session.get('user_name'))
 
 
 # ─── Run ──────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)
