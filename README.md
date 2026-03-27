@@ -33,11 +33,19 @@ A Flask-based web application that predicts diabetes risk using machine learning
    pip install -r requirements.txt
    ```
 
-3. **Set up MongoDB**:
+3. **Environment Setup**:
+   Create a `.env` file in the root directory to configure the email contact form:
+   ```env
+   EMAIL_USER=your_email@gmail.com
+   EMAIL_PASS=your_16_char_google_app_password
+   RECEIVER_EMAIL=your_receiver_email@example.com
+   ```
+
+4. **Set up MongoDB**:
    - Ensure MongoDB is running locally (default: `mongodb://localhost:27017/`).
    - The app will create databases `diabetes_ai_db` with collections `users` and `predictions`.
 
-4. **Run the app**:
+5. **Run the app**:
    ```
    python app.py
    ```
@@ -50,6 +58,29 @@ A Flask-based web application that predicts diabetes risk using machine learning
 - **Predict**: Enter health data (based on `feature_columns.json`) and get a prediction.
 - **Dashboard**: View your prediction history.
 - **About/Contact**: Learn more about the project.
+
+## Screenshots
+
+*(These images are located in the `screenshots/` folder.)*
+
+### Home Page
+![Homepage image](<screenshots/Screenshot 2026-03-27 224237.png>)
+
+![Homepaage image](<screenshots/Screenshot 2026-03-27 224304.png>)
+
+![Homepage image](<screenshots/Screenshot 2026-03-27 225058.png>)
+
+### Dashboard
+![Dashboard Page](<screenshots/Screenshot 2026-03-27 225205.png>)
+
+### Prediction Page
+![Prediction Page](<screenshots/Screenshot 2026-03-27 225500.png>)
+
+### Login / Register
+![Register Page](<screenshots/Screenshot 2026-03-27 225639.png>)
+
+![Login page](<screenshots/Screenshot 2026-03-27 225628.png>)
+
 
 ## Project Structure
 
@@ -77,4 +108,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-Praveen Kumar - praveenkrdwived.3249@gmail.com
+Praveen Kumar - namekr567@gmail.com
