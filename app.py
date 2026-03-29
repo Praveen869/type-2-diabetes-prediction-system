@@ -3,9 +3,10 @@ from pymongo import MongoClient
 from werkzeug.security import generate_password_hash, check_password_hash
 import joblib
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta   # timedelta is used to set OTP expiry time
 import os
 import smtplib
+import random                               # used to generate the 6-digit OTP
 from email.message import EmailMessage
 
 try:
@@ -25,12 +26,17 @@ try:
     db = client['diabetes_ai_db']
     users_col = db['users']
     predictions_col = db['predictions']
+    # ── NEW: temporary collection to hold unverified signups ──────────────────
+    # Each document here lives for at most 5 minutes (until OTP is confirmed).
+    # Once verified, the user is moved to the real 'users' collection.
+    otp_col = db['otp_pending']
     print("✅ MongoDB connected successfully.")
 except Exception as e:
     print(f"⚠️  MongoDB not available: {e}")
     db = None
     users_col = None
     predictions_col = None
+    otp_col = None
 
 # ─── Load ML Model & Scaler ───────────────────────────────────────────────────
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'diabetes_model.pkl')
@@ -62,6 +68,85 @@ def db_available():
     return db is not None
 
 
+# ── NEW HELPER: Generate a random 6-digit OTP ──────────────────────────────────
+# random.randint(100000, 999999) gives a number between 100000 and 999999
+# str() converts it to a string so we can display/compare it easily
+def generate_otp():
+    """Return a 6-digit OTP as a string, e.g. '483921'."""
+    return str(random.randint(100000, 999999))
+
+
+# ── NEW HELPER: Send OTP email to the user ─────────────────────────────────────
+# Reuses the same Gmail SMTP setup already used in the /contact route.
+def send_otp_email(recipient_email, otp_code, user_name):
+    """
+    Send an OTP email to `recipient_email`.
+    Returns True on success, False on failure.
+    """
+    # Read sender credentials from the .env file
+    sender_email    = os.environ.get('EMAIL_USER')
+    sender_password = os.environ.get('EMAIL_PASS', '')
+
+    # If the app password is not configured, we cannot send email
+    if not sender_password or not sender_email:
+        print("⚠️  EMAIL_USER or EMAIL_PASS not set in .env — cannot send OTP.")
+        return False
+
+    # Build the email message
+    msg = EmailMessage()
+    msg['Subject'] = "Your DiabetesAI Verification Code"
+    msg['From']    = sender_email
+    msg['To']      = recipient_email
+
+    # Plain-text body (shown if HTML is not supported)
+    plain_body = (
+        f"Hello {user_name},\n\n"
+        f"Your DiabetesAI verification code is: {otp_code}\n\n"
+        f"This code expires in 5 minutes.\n"
+        f"If you did not request this, please ignore this email.\n\n"
+        f"— The DiabetesAI Team"
+    )
+    msg.set_content(plain_body)
+
+    # HTML version of the email (prettier, displayed by most modern email clients)
+    html_body = f"""
+    <div style="font-family:Inter,Arial,sans-serif;max-width:480px;margin:auto;background:#0f172a;
+                border-radius:16px;overflow:hidden;border:1px solid #1e3a5f;">
+      <div style="background:linear-gradient(135deg,#1e3a5f,#0ea5e9);padding:32px;text-align:center;">
+        <h1 style="color:#fff;margin:0;font-size:24px;">&#10084; DiabetesAI</h1>
+        <p style="color:#bae6fd;margin:8px 0 0;">Email Verification</p>
+      </div>
+      <div style="padding:32px;">
+        <p style="color:#cbd5e1;font-size:15px;">Hi <strong style="color:#f8fafc;">{user_name}</strong>,</p>
+        <p style="color:#94a3b8;font-size:14px;">Use this code to complete your registration:</p>
+        <div style="background:#1e293b;border-radius:12px;padding:24px;text-align:center;margin:24px 0;
+                    border:1px solid #334155;">
+          <span style="font-size:40px;font-weight:800;letter-spacing:12px;color:#0ea5e9;">{otp_code}</span>
+        </div>
+        <p style="color:#64748b;font-size:13px;text-align:center;">
+          &#9203; This code expires in <strong>5 minutes</strong>.
+        </p>
+        <p style="color:#475569;font-size:12px;text-align:center;margin-top:24px;">
+          If you did not create an account, please ignore this email.
+        </p>
+      </div>
+    </div>
+    """
+    # Add the HTML version as an alternative (email clients pick the best one)
+    msg.add_alternative(html_body, subtype='html')
+
+    # Send via Gmail SMTP over SSL (port 465)
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+        print(f"✅ OTP email sent to {recipient_email}")
+        return True
+    except Exception as e:
+        print(f"⚠️  Failed to send OTP email: {e}")
+        return False
+
+
 # ─── Routes ───────────────────────────────────────────────────────────────────
 
 @app.route('/')
@@ -71,16 +156,18 @@ def home():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    # If already logged in, no need to register again
     if 'user_email' in session:
         return redirect(url_for('home'))
 
     if request.method == 'POST':
-        name = request.form.get('name', '').strip()
-        email = request.form.get('email', '').strip().lower()
+        # ── Step 1: Read form data ────────────────────────────────────────────
+        name     = request.form.get('name', '').strip()
+        email    = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
-        confirm = request.form.get('confirm_password', '')
+        confirm  = request.form.get('confirm_password', '')
 
-        # Validation
+        # ── Step 2: Basic validation ──────────────────────────────────────────
         if not all([name, email, password, confirm]):
             flash('All fields are required.', 'danger')
             return render_template('register.html')
@@ -93,25 +180,191 @@ def register():
             flash('Password must be at least 6 characters.', 'danger')
             return render_template('register.html')
 
-        if db_available():
-            if users_col.find_one({'email': email}):
-                flash('Email already registered. Please log in.', 'warning')
-                return redirect(url_for('login'))
+        # ── Step 3: Check database availability ───────────────────────────────
+        if not db_available():
+            flash('Database unavailable — cannot register right now.', 'danger')
+            return render_template('register.html')
 
-            users_col.insert_one({
-                'name': name,
-                'email': email,
-                'password': generate_password_hash(password),
+        # ── Step 4: Check for duplicate email in both the real users
+        #           collection AND the pending (not-yet-verified) collection
+        if users_col.find_one({'email': email}):
+            flash('Email already registered. Please log in.', 'warning')
+            return redirect(url_for('login'))
+
+        # ── Step 5: Generate OTP ──────────────────────────────────────────────
+        # We create a 6-digit code. We also record when it was created so we
+        # can check if it has expired (5 minutes = 300 seconds).
+        otp_code   = generate_otp()
+        expires_at = datetime.now() + timedelta(minutes=5)  # OTP valid for 5 min
+
+        # ── Step 6: Store pending registration in MongoDB ─────────────────────
+        # We do NOT create the real user yet. We only save the data temporarily
+        # in the 'otp_pending' collection. Once OTP is verified, we move the
+        # user to the real 'users' collection.
+        #
+        # update_one with upsert=True means:
+        #   → If a pending record for this email exists (e.g. they tried before),
+        #     update it with the new OTP.
+        #   → If not, create a new one.
+        otp_col.update_one(
+            {'email': email},        # find document by email
+            {'$set': {
+                'name':       name,
+                'email':      email,
+                'password':   generate_password_hash(password),  # hash immediately for security
+                'otp':        otp_code,
+                'expires_at': expires_at,
                 'created_at': datetime.now()
-            })
-        else:
-            # Fallback: store in session for demo purposes
-            flash('Database unavailable — demo mode.', 'info')
+            }},
+            upsert=True              # create if it doesn't exist
+        )
 
-        flash('Registration successful! Please log in.', 'success')
-        return redirect(url_for('login'))
+        # ── Step 7: Send OTP email ────────────────────────────────────────────
+        email_sent = send_otp_email(email, otp_code, name)
+        if not email_sent:
+            flash(
+                'Could not send verification email. '
+                'Check server email configuration and try again.',
+                'danger'
+            )
+            return render_template('register.html')
+
+        # ── Step 8: Save email in session so the verify page knows who to check
+        # We use a separate key 'pending_email' (not 'user_email') so the user
+        # is NOT logged in yet — logging in happens only after OTP is confirmed.
+        session['pending_email'] = email
+        session['pending_name']  = name
+
+        flash(f'A 6-digit verification code has been sent to {email}.', 'info')
+        return redirect(url_for('verify_otp'))   # go to the OTP page
 
     return render_template('register.html')
+
+
+# ── NEW ROUTE: OTP Verification Page ──────────────────────────────────────────
+@app.route('/verify-otp', methods=['GET', 'POST'])
+def verify_otp():
+    """
+    GET  → Show the OTP input form.
+    POST → Validate the OTP the user typed in.
+    """
+    # Safety check: if there is no pending email in the session, the user
+    # should not be on this page at all — redirect them to register.
+    if 'pending_email' not in session:
+        flash('Please complete the registration form first.', 'warning')
+        return redirect(url_for('register'))
+
+    email = session['pending_email']   # the email we sent the OTP to
+    name  = session.get('pending_name', '')
+
+    if request.method == 'POST':
+        # ── Step 1: Get the OTP the user entered ──────────────────────────────
+        # The OTP page sends 6 individual digit inputs (digit1..digit6).
+        # We join them into one string here.
+        entered_otp = (
+            request.form.get('digit1', '') +
+            request.form.get('digit2', '') +
+            request.form.get('digit3', '') +
+            request.form.get('digit4', '') +
+            request.form.get('digit5', '') +
+            request.form.get('digit6', '')
+        ).strip()
+
+        # ── Step 2: Look up the pending record ───────────────────────────────
+        if not db_available():
+            flash('Database unavailable. Please try again later.', 'danger')
+            return render_template('verify_otp.html', email=email, name=name)
+
+        pending = otp_col.find_one({'email': email})
+
+        if not pending:
+            # The pending record was deleted or never existed
+            flash('Session expired. Please register again.', 'warning')
+            session.pop('pending_email', None)
+            session.pop('pending_name', None)
+            return redirect(url_for('register'))
+
+        # ── Step 3: Check if OTP has expired ─────────────────────────────────
+        # expires_at was stored as a datetime object in MongoDB.
+        if datetime.now() > pending['expires_at']:
+            flash('OTP has expired. Click "Resend OTP" to get a new one.', 'warning')
+            return render_template('verify_otp.html', email=email, name=name)
+
+        # ── Step 4: Check if OTP matches ─────────────────────────────────────
+        if entered_otp != pending['otp']:
+            flash('Incorrect OTP. Please check the code and try again.', 'danger')
+            return render_template('verify_otp.html', email=email, name=name)
+
+        # ── Step 5: OTP is correct! Create the real user account ─────────────
+        # Check one more time that the email wasn't registered in the meantime
+        if users_col.find_one({'email': email}):
+            flash('Email already registered. Please log in.', 'warning')
+            otp_col.delete_one({'email': email})
+            session.pop('pending_email', None)
+            session.pop('pending_name', None)
+            return redirect(url_for('login'))
+
+        # Insert into the real users collection
+        users_col.insert_one({
+            'name':       pending['name'],
+            'email':      pending['email'],
+            'password':   pending['password'],   # already hashed from /register
+            'created_at': datetime.now(),
+            'verified':   True                   # mark as email-verified
+        })
+
+        # ── Step 6: Clean up ──────────────────────────────────────────────────
+        otp_col.delete_one({'email': email})      # remove temp record
+        session.pop('pending_email', None)        # remove from session
+        session.pop('pending_name', None)
+
+        flash(
+            f'Account verified! Welcome to DiabetesAI, {pending["name"]}! '
+            'Please log in to continue.',
+            'success'
+        )
+        return redirect(url_for('login'))
+
+    # GET request — just show the form
+    return render_template('verify_otp.html', email=email, name=name)
+
+
+# ── NEW ROUTE: Resend OTP ──────────────────────────────────────────────────────
+@app.route('/resend-otp', methods=['POST'])
+def resend_otp():
+    """
+    Generate a fresh OTP, save it (overwriting the old one), and re-send the email.
+    Only works if there is a valid pending session.
+    """
+    if 'pending_email' not in session:
+        flash('Please complete the registration form first.', 'warning')
+        return redirect(url_for('register'))
+
+    email = session['pending_email']
+    name  = session.get('pending_name', '')
+
+    if not db_available():
+        flash('Database unavailable. Please try again later.', 'danger')
+        return redirect(url_for('verify_otp'))
+
+    # Generate a brand-new OTP with a fresh 5-minute expiry
+    new_otp    = generate_otp()
+    expires_at = datetime.now() + timedelta(minutes=5)
+
+    # Update the pending record with the new OTP
+    otp_col.update_one(
+        {'email': email},
+        {'$set': {'otp': new_otp, 'expires_at': expires_at}}
+    )
+
+    # Send the new OTP to the user's email
+    sent = send_otp_email(email, new_otp, name)
+    if sent:
+        flash(f'A new verification code has been sent to {email}.', 'success')
+    else:
+        flash('Failed to send new OTP. Please check server configuration.', 'danger')
+
+    return redirect(url_for('verify_otp'))
 
 
 @app.route('/login', methods=['GET', 'POST'])

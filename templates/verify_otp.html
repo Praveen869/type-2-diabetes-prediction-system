@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+{% block title %}Verify Email – DiabetesAI{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="auth-bg-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+  </div>
+  <div class="container position-relative">
+    <div class="row justify-content-center py-5">
+      <div class="col-md-8 col-lg-5">
+        <div class="auth-card animate-fadeInUp">
+
+          <!-- ── Card Header ──────────────────────────────────── -->
+          <div class="auth-header">
+            <div class="auth-icon" id="otpIconWrapper">
+              <i class="bi bi-envelope-check-fill" id="otpIcon"></i>
+            </div>
+            <h2 class="auth-title">Check Your Email</h2>
+            <p class="auth-subtitle">
+              We sent a 6-digit code to<br>
+              <strong class="text-info">{{ email }}</strong>
+            </p>
+          </div>
+
+          <!-- ── Card Body ───────────────────────────────────── -->
+          <div class="auth-body">
+
+            <!-- Countdown Timer -->
+            <div class="otp-timer-wrapper mb-4">
+              <div class="otp-timer-ring">
+                <!-- SVG circle that shrinks as time counts down -->
+                <svg width="72" height="72" viewBox="0 0 72 72">
+                  <circle cx="36" cy="36" r="30" fill="none" stroke="#1e3a5f" stroke-width="5"/>
+                  <circle cx="36" cy="36" r="30" fill="none" stroke="#0ea5e9" stroke-width="5"
+                          stroke-dasharray="188.5" stroke-dashoffset="0"
+                          stroke-linecap="round" transform="rotate(-90 36 36)"
+                          id="timerCircle"/>
+                </svg>
+                <span class="otp-timer-label" id="timerLabel">5:00</span>
+              </div>
+              <p class="otp-timer-text" id="timerText">Code expires in</p>
+            </div>
+
+            <!-- OTP Input Form -->
+            <form method="POST" action="{{ url_for('verify_otp') }}" id="otpForm">
+              <p class="text-center text-muted small mb-3">Enter the 6-digit verification code</p>
+
+              <!-- 6 individual digit boxes -->
+              <div class="otp-inputs mb-4" id="otpInputs">
+                <input type="text" class="otp-digit" name="digit1" id="d1"
+                       maxlength="1" inputmode="numeric" pattern="[0-9]"
+                       autocomplete="one-time-code" autofocus required />
+                <input type="text" class="otp-digit" name="digit2" id="d2"
+                       maxlength="1" inputmode="numeric" pattern="[0-9]" required />
+                <input type="text" class="otp-digit" name="digit3" id="d3"
+                       maxlength="1" inputmode="numeric" pattern="[0-9]" required />
+                <input type="text" class="otp-digit" name="digit4" id="d4"
+                       maxlength="1" inputmode="numeric" pattern="[0-9]" required />
+                <input type="text" class="otp-digit" name="digit5" id="d5"
+                       maxlength="1" inputmode="numeric" pattern="[0-9]" required />
+                <input type="text" class="otp-digit" name="digit6" id="d6"
+                       maxlength="1" inputmode="numeric" pattern="[0-9]" required />
+              </div>
+
+              <button type="submit" class="btn btn-auth w-100" id="verifyBtn">
+                <span class="btn-text">
+                  <i class="bi bi-shield-check me-2"></i>Verify & Activate Account
+                </span>
+                <span class="btn-loader d-none">
+                  <i class="bi bi-arrow-repeat spin me-2"></i>Verifying...
+                </span>
+              </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="d-flex align-items-center gap-2 my-4">
+              <hr class="flex-grow-1" style="border-color:#1e3a5f;" />
+              <span class="text-muted small">or</span>
+              <hr class="flex-grow-1" style="border-color:#1e3a5f;" />
+            </div>
+
+            <!-- Resend OTP -->
+            <form method="POST" action="{{ url_for('resend_otp') }}" id="resendForm">
+              <button type="submit" class="btn w-100 otp-resend-btn" id="resendBtn" disabled>
+                <i class="bi bi-arrow-clockwise me-2"></i>
+                <span id="resendBtnText">Resend Code (wait for timer)</span>
+              </button>
+            </form>
+
+            <!-- Wrong email? -->
+            <p class="text-center mt-3 small text-muted">
+              Wrong email?
+              <a href="{{ url_for('register') }}" class="auth-link">Go back to Register</a>
+            </p>
+
+          </div><!-- /auth-body -->
+        </div><!-- /auth-card -->
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+<!-- ── Inline Styles (OTP-specific, no external file change needed) ── -->
+{% block extra_head %}
+<style>
+  /* ── OTP digit boxes ───────────────────────────────────────────── */
+  .otp-inputs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .otp-digit {
+    width: 52px;
+    height: 60px;
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    border: 2px solid #1e3a5f;
+    border-radius: 12px;
+    background: #0f172a;
+    color: #f8fafc;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s, transform .15s;
+    caret-color: #0ea5e9;
+  }
+
+  .otp-digit:focus {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, .2);
+    transform: translateY(-3px) scale(1.05);
+  }
+
+  /* Filled-in digit gets an accent border */
+  .otp-digit.filled {
+    border-color: #0ea5e9;
+    background: rgba(14, 165, 233, .08);
+  }
+
+  /* Shake animation on wrong OTP */
+  .otp-inputs.shake {
+    animation: shake .4s ease;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%      { transform: translateX(-8px); }
+    40%      { transform: translateX(8px); }
+    60%      { transform: translateX(-6px); }
+    80%      { transform: translateX(6px); }
+  }
+
+  /* ── Countdown timer ───────────────────────────────────────────── */
+  .otp-timer-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .otp-timer-ring {
+    position: relative;
+    width: 72px;
+    height: 72px;
+  }
+
+  .otp-timer-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0ea5e9;
+  }
+
+  .otp-timer-text {
+    font-size: .8rem;
+    color: #64748b;
+    margin: 0;
+  }
+
+  /* Timer turns red when < 30 s remain */
+  .timer-urgent #timerCircle { stroke: #ef4444; }
+  .timer-urgent .otp-timer-label { color: #ef4444; }
+
+  /* ── Resend button ─────────────────────────────────────────────── */
+  .otp-resend-btn {
+    background: transparent;
+    border: 1px solid #1e3a5f;
+    color: #64748b;
+    border-radius: 10px;
+    padding: .65rem 1rem;
+    font-size: .9rem;
+    transition: all .25s;
+  }
+
+  .otp-resend-btn:not(:disabled):hover {
+    border-color: #0ea5e9;
+    color: #0ea5e9;
+    background: rgba(14,165,233,.06);
+  }
+
+  .otp-resend-btn:disabled {
+    cursor: not-allowed;
+    opacity: .5;
+  }
+</style>
+{% endblock %}
+
+<!-- ── JavaScript ────────────────────────────────────────────────── -->
+{% block extra_scripts %}
+<script>
+"use strict";
+
+/* ─── 1. AUTO-ADVANCE OTP INPUTS ──────────────────────────────────────────
+   When the user types a digit in one box, the cursor automatically moves
+   to the next box. Backspace moves the cursor back. Paste works too.      */
+
+const digits  = document.querySelectorAll('.otp-digit');
+const otpForm = document.getElementById('otpForm');
+
+digits.forEach((input, index) => {
+
+  // Style filled boxes differently
+  input.addEventListener('input', () => {
+    input.value = input.value.replace(/\D/g, '');   // keep digits only
+    if (input.value) {
+      input.classList.add('filled');
+      // Move to next box
+      if (index < digits.length - 1) {
+        digits[index + 1].focus();
+      }
+    } else {
+      input.classList.remove('filled');
+    }
+  });
+
+  // Backspace: clear current box AND move to previous box
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Backspace') {
+      if (!input.value && index > 0) {
+        digits[index - 1].focus();
+        digits[index - 1].value = '';
+        digits[index - 1].classList.remove('filled');
+      }
+    }
+  });
+
+  // Handle paste (e.g. user pastes "483921" from clipboard)
+  input.addEventListener('paste', e => {
+    e.preventDefault();
+    const pasted = (e.clipboardData || window.clipboardData).getData('text');
+    const numbers = pasted.replace(/\D/g, '').slice(0, 6);  // keep only 6 digits
+    if (numbers.length === 6) {
+      digits.forEach((d, i) => {
+        d.value = numbers[i] || '';
+        if (d.value) d.classList.add('filled'); else d.classList.remove('filled');
+      });
+      digits[digits.length - 1].focus();
+    }
+  });
+});
+
+
+/* ─── 2. SHOW LOADING STATE ON SUBMIT ────────────────────────────────────
+   When the form is submitted, change the button to show a spinner so the
+   user knows the request is being processed.                              */
+
+otpForm.addEventListener('submit', () => {
+  const btn    = document.getElementById('verifyBtn');
+  const text   = btn.querySelector('.btn-text');
+  const loader = btn.querySelector('.btn-loader');
+  text.classList.add('d-none');
+  loader.classList.remove('d-none');
+  btn.disabled = true;
+});
+
+
+/* ─── 3. COUNTDOWN TIMER (5 minutes = 300 seconds) ───────────────────────
+   Shows remaining time on the SVG ring and in text.
+   When time runs out:
+     - Inputs are disabled
+     - Resend button is enabled
+     - Timer shows "Expired"                                               */
+
+const TOTAL_SECONDS  = 300;          // 5 minutes
+const circumference  = 2 * Math.PI * 30;   // circle radius is 30 (from SVG)
+
+const timerCircle    = document.getElementById('timerCircle');
+const timerLabel     = document.getElementById('timerLabel');
+const timerText      = document.getElementById('timerText');
+const timerWrapper   = document.getElementById('otpInputs').closest('form').previousElementSibling.previousElementSibling;
+const resendBtn      = document.getElementById('resendBtn');
+const resendBtnText  = document.getElementById('resendBtnText');
+
+let secondsLeft = TOTAL_SECONDS;
+
+// Format seconds as M:SS
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = String(s % 60).padStart(2, '0');
+  return `${m}:${sec}`;
+}
+
+// Update the SVG ring to reflect remaining time
+function updateRing(s) {
+  const progress   = s / TOTAL_SECONDS;           // 1.0 → 0.0
+  const dashOffset = circumference * (1 - progress);
+  timerCircle.style.strokeDashoffset = dashOffset;
+}
+
+const timerInterval = setInterval(() => {
+  secondsLeft--;
+
+  timerLabel.textContent = formatTime(secondsLeft);
+  updateRing(secondsLeft);
+
+  // Turn red when less than 30 seconds remain
+  const ring = timerCircle.closest('svg').parentElement;
+  if (secondsLeft <= 30) {
+    ring.classList.add('timer-urgent');
+  }
+
+  if (secondsLeft <= 0) {
+    clearInterval(timerInterval);
+
+    // Disable OTP inputs — the code has expired
+    digits.forEach(d => {
+      d.disabled = true;
+      d.classList.add('otp-expired');
+    });
+    document.getElementById('verifyBtn').disabled = true;
+
+    timerLabel.textContent    = '0:00';
+    timerText.textContent     = 'Code expired';
+
+    // Enable the Resend button
+    resendBtn.disabled       = false;
+    resendBtnText.textContent = 'Resend New Code';
+  }
+}, 1000);
+
+
+/* ─── 4. ENABLE RESEND BUTTON AFTER 60 SECONDS ───────────────────────────
+   Even before full expiry, allow resend after 60 seconds so users who
+   didn't receive the email can request another one quickly.               */
+
+setTimeout(() => {
+  if (secondsLeft > 0) {
+    resendBtn.disabled       = false;
+    resendBtnText.textContent = 'Resend Code';
+  }
+}, 60000);   // 60 seconds
+
+
+/* ─── 5. SHAKE ANIMATION ON FLASH "danger" MESSAGES ─────────────────────
+   If there's a "danger" flash message on the page (wrong OTP), shake the
+   input boxes to give a visual hint.                                      */
+
+const hasDangerAlert = document.querySelector('.alert-danger');
+if (hasDangerAlert) {
+  const inputsWrapper = document.getElementById('otpInputs');
+  inputsWrapper.classList.add('shake');
+  // Remove class after animation so it can be triggered again next time
+  inputsWrapper.addEventListener('animationend', () => {
+    inputsWrapper.classList.remove('shake');
+  });
+  // Also clear the inputs so the user can type fresh
+  digits.forEach(d => {
+    d.value = '';
+    d.classList.remove('filled');
+  });
+  digits[0].focus();
+}
+
+</script>
+{% endblock %}
