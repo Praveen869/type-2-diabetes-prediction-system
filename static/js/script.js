@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'insulin',        min: 0,   max: 900, label: 'Insulin' },
         { id: 'bmi',            min: 10,  max: 70,  label: 'BMI' },
         { id: 'dpf',            min: 0.0, max: 3.0, label: 'Diabetes Pedigree Function' },
-        { id: 'age',            min: 10,  max: 120, label: 'Age' },
+        { id: 'age',            min: 21,  max: 81,  label: 'Age' },
       ];
 
       fields.forEach(f => {

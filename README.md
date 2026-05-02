@@ -142,7 +142,7 @@ ml/
 │   ├── base.html           # Shared layout (navbar, footer, flash messages)
 │   ├── home.html           # Landing page
 │   ├── register.html       # Signup form
-│   ├── verify_otp.html     # OTP verification page (NEW)
+│   ├── verify_otp.html     # OTP verification page
 │   ├── login.html          # Login form
 │   ├── predict.html        # Health data input & prediction result
 │   ├── dashboard.html      # Prediction history
