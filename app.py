@@ -85,20 +85,14 @@ def send_otp_email(recipient_email, otp_code, user_name):
     Send an OTP email to `recipient_email`.
     Returns True on success, False on failure.
     """
-    # Read sender credentials from the .env file
     sender_email    = os.environ.get('EMAIL_USER')
     sender_password = os.environ.get('EMAIL_PASS', '')
+    brevo_api_key   = os.environ.get('BREVO_API_KEY')
 
-    # If the app password is not configured, we cannot send email
-    if not sender_password or not sender_email:
-        print("[WARNING] EMAIL_USER or EMAIL_PASS not set in .env - cannot send OTP.")
+    # If neither is configured, we cannot send email
+    if not brevo_api_key and (not sender_password or not sender_email):
+        print("[WARNING] Neither BREVO_API_KEY nor EMAIL_USER/EMAIL_PASS is set - cannot send OTP.")
         return False
-
-    # Build the email message
-    msg = EmailMessage()
-    msg['Subject'] = "Your DiabetesAI Verification Code"
-    msg['From']    = sender_email
-    msg['To']      = recipient_email
 
     # Plain-text body (shown if HTML is not supported)
     plain_body = (
@@ -108,7 +102,6 @@ def send_otp_email(recipient_email, otp_code, user_name):
         f"If you did not request this, please ignore this email.\n\n"
         f"— The DiabetesAI Team"
     )
-    msg.set_content(plain_body)
 
     # HTML version of the email (prettier, displayed by most modern email clients)
     html_body = f"""
@@ -134,19 +127,61 @@ def send_otp_email(recipient_email, otp_code, user_name):
       </div>
     </div>
     """
-    # Add the HTML version as an alternative (email clients pick the best one)
-    msg.add_alternative(html_body, subtype='html')
 
-    # Send via Gmail SMTP with STARTTLS (port 587) and a 10s timeout
+    # --- Option A: Send via Brevo HTTP API (Render Production) ---
+    if brevo_api_key:
+        try:
+            import urllib.request
+            import json
+            headers = {
+                "accept": "application/json",
+                "api-key": brevo_api_key,
+                "content-type": "application/json",
+                "User-Agent": "Mozilla/5.0"
+            }
+            payload = {
+                "sender": {"name": "DiabetesAI", "email": sender_email or "no-reply@diabetesai.com"},
+                "to": [{"email": recipient_email, "name": user_name}],
+                "subject": "Your DiabetesAI Verification Code",
+                "htmlContent": html_body,
+                "textContent": plain_body
+            }
+            req = urllib.request.Request(
+                "https://api.brevo.com/v3/smtp/email",
+                data=json.dumps(payload).encode("utf-8"),
+                headers=headers,
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=10) as response:
+                status_code = response.getcode()
+                if status_code in [200, 201, 202]:
+                    print(f"[SUCCESS] OTP email sent to {recipient_email} via Brevo HTTP API")
+                    return True
+                else:
+                    print(f"[WARNING] Brevo API returned status code {status_code}")
+                    return False
+        except Exception as e:
+            print(f"[WARNING] Failed to send OTP email via Brevo HTTP API: {e}")
+            return False
+
+    # --- Option B: Send via Gmail SMTP (Local Development) ---
     try:
+        from email.message import EmailMessage
+        msg = EmailMessage()
+        msg['Subject'] = "Your DiabetesAI Verification Code"
+        msg['From']    = sender_email
+        msg['To']      = recipient_email
+        msg.set_content(plain_body)
+        msg.add_alternative(html_body, subtype='html')
+
         with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as server:
             server.starttls()
             server.login(sender_email, sender_password)
             server.send_message(msg)
-        print(f"[SUCCESS] OTP email sent to {recipient_email}")
+        print(f"[SUCCESS] OTP email sent to {recipient_email} via SMTP")
         return True
     except Exception as e:
-        print(f"[WARNING] Failed to send OTP email: {e}")
+        print(f"[WARNING] Failed to send OTP email via SMTP: {e}")
         return False
 
 
@@ -542,21 +577,63 @@ def contact():
         sender_email = os.environ.get('EMAIL_USER')
         sender_password = os.environ.get('EMAIL_PASS', '') 
         receiver_email = os.environ.get('RECEIVER_EMAIL', 'fallback@email.com')
+        brevo_api_key = os.environ.get('BREVO_API_KEY')
 
-        if not sender_password:
-            flash('Email configuration (App Password) is missing on the server. Message not sent.', 'danger')
+        if not brevo_api_key and not sender_password:
+            flash('Email configuration is missing on the server. Message not sent.', 'danger')
             return redirect(url_for('contact'))
 
-        msg = EmailMessage()
-        msg['Subject'] = f"DiabetesAI Contact: {c_subject}"
-        msg['From'] = sender_email
-        msg['To'] = receiver_email
-        msg.add_header('reply-to', c_email)
-        
+        subject = f"DiabetesAI Contact: {c_subject}"
         body = f"New message from DiabetesAI Contact Form:\n\nName: {c_name}\nEmail: {c_email}\nSubject: {c_subject}\n\nMessage:\n{c_message}\n"
-        msg.set_content(body)
 
+        # --- Option A: Send via Brevo HTTP API (Render Production) ---
+        if brevo_api_key:
+            try:
+                import urllib.request
+                import json
+                headers = {
+                    "accept": "application/json",
+                    "api-key": brevo_api_key,
+                    "content-type": "application/json",
+                    "User-Agent": "Mozilla/5.0"
+                }
+                payload = {
+                    "sender": {"name": c_name, "email": sender_email or "contact@diabetesai.com"},
+                    "to": [{"email": receiver_email, "name": "DiabetesAI Admin"}],
+                    "replyTo": {"email": c_email, "name": c_name},
+                    "subject": subject,
+                    "textContent": body
+                }
+                req = urllib.request.Request(
+                    "https://api.brevo.com/v3/smtp/email",
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers=headers,
+                    method="POST"
+                )
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    status_code = response.getcode()
+                    if status_code in [200, 201, 202]:
+                        flash('Thank you for your message! We have received it and will get back to you soon.', 'success')
+                        return redirect(url_for('contact'))
+                    else:
+                        print(f"[WARNING] Brevo API returned status code {status_code}")
+                        flash('An error occurred while sending the message. Please try again later.', 'danger')
+                        return redirect(url_for('contact'))
+            except Exception as e:
+                print(f"[WARNING] Failed to send contact email via Brevo HTTP API: {e}")
+                flash('An error occurred while sending the message. Please try again later.', 'danger')
+                return redirect(url_for('contact'))
+
+        # --- Option B: Send via Gmail SMTP (Local Development) ---
         try:
+            from email.message import EmailMessage
+            msg = EmailMessage()
+            msg['Subject'] = subject
+            msg['From'] = sender_email
+            msg['To'] = receiver_email
+            msg.add_header('reply-to', c_email)
+            msg.set_content(body)
+
             with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as server:
                 server.starttls()
                 server.login(sender_email, sender_password)
