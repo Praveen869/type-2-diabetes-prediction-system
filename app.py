@@ -137,9 +137,10 @@ def send_otp_email(recipient_email, otp_code, user_name):
     # Add the HTML version as an alternative (email clients pick the best one)
     msg.add_alternative(html_body, subtype='html')
 
-    # Send via Gmail SMTP over SSL (port 465)
+    # Send via Gmail SMTP with STARTTLS (port 587) and a 10s timeout
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as server:
+            server.starttls()
             server.login(sender_email, sender_password)
             server.send_message(msg)
         print(f"[SUCCESS] OTP email sent to {recipient_email}")
@@ -556,7 +557,8 @@ def contact():
         msg.set_content(body)
 
         try:
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as server:
+                server.starttls()
                 server.login(sender_email, sender_password)
                 server.send_message(msg)
             flash('Thank you for your message! We have received it and will get back to you soon.', 'success')
