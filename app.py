@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+# pyrefly: ignore [missing-import]
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash, check_password_hash
+# pyrefly: ignore [missing-import]
 import joblib
 import numpy as np
 from datetime import datetime, timedelta   # timedelta is used to set OTP expiry time
@@ -30,9 +32,9 @@ try:
     # Each document here lives for at most 5 minutes (until OTP is confirmed).
     # Once verified, the user is moved to the real 'users' collection.
     otp_col = db['otp_pending']
-    print("✅ MongoDB connected successfully.")
+    print("[SUCCESS] MongoDB connected successfully.")
 except Exception as e:
-    print(f"⚠️  MongoDB not available: {e}")
+    print(f"[WARNING] MongoDB not available: {e}")
     db = None
     users_col = None
     predictions_col = None
@@ -45,11 +47,11 @@ SCALER_PATH = os.path.join(os.path.dirname(__file__), 'scaler.pkl')
 try:
     model = joblib.load(MODEL_PATH)
     scaler = joblib.load(SCALER_PATH)
-    print("✅ Model and Scaler loaded successfully.")
+    print("[SUCCESS] Model and Scaler loaded successfully.")
 except Exception as e:
     model = None
     scaler = None
-    print(f"⚠️  Model or Scaler could not be loaded: {e}")
+    print(f"[WARNING] Model or Scaler could not be loaded: {e}")
 
 
 # ─── Helper Functions ─────────────────────────────────────────────────────────
@@ -89,7 +91,7 @@ def send_otp_email(recipient_email, otp_code, user_name):
 
     # If the app password is not configured, we cannot send email
     if not sender_password or not sender_email:
-        print("⚠️  EMAIL_USER or EMAIL_PASS not set in .env — cannot send OTP.")
+        print("[WARNING] EMAIL_USER or EMAIL_PASS not set in .env - cannot send OTP.")
         return False
 
     # Build the email message
@@ -140,10 +142,10 @@ def send_otp_email(recipient_email, otp_code, user_name):
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender_email, sender_password)
             server.send_message(msg)
-        print(f"✅ OTP email sent to {recipient_email}")
+        print(f"[SUCCESS] OTP email sent to {recipient_email}")
         return True
     except Exception as e:
-        print(f"⚠️  Failed to send OTP email: {e}")
+        print(f"[WARNING] Failed to send OTP email: {e}")
         return False
 
 
